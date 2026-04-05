@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Heron Recruitment — Shift Booking</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a1a; min-height: 100vh; padding: 2rem 1rem; }
+  .page-wrap { max-width: 760px; margin: 0 auto; }
+  .header { display: flex; align-items: center; gap: 14px; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid #e0e0da; }
+  .logo { width: 44px; height: 44px; background: #1D9E75; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .logo svg { width: 22px; height: 22px; fill: white; }
+  .header-text h1 { font-size: 20px; font-weight: 600; color: #1a1a1a; }
+  .header-text p { font-size: 14px; color: #666; margin-top: 3px; }
+  .section { background: white; border: 1px solid #e0e0da; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+  .section-label { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; }
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  label { font-size: 12px; color: #555; font-weight: 500; }
+  input, select, textarea {
+    font-family: inherit; font-size: 14px; color: #1a1a1a;
+    background: #f9f9f7; border: 1px solid #ddd; border-radius: 8px;
+    padding: 9px 11px; width: 100%; transition: border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #1D9E75; box-shadow: 0 0 0 3px rgba(29,158,117,0.1); }
+  .search-wrap { position: relative; margin-bottom: 10px; }
+  .search-wrap input { padding-left: 32px; }
+  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #aaa; font-size: 15px; pointer-events: none; }
+  .nurse-row { background: #f9f9f7; border: 1px solid #e5e5e0; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+  .nurse-row-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .nurse-num { font-size: 13px; font-weight: 600; color: #1D9E75; }
+  .remove-btn { font-size: 20px; line-height: 1; background: none; border: none; color: #ccc; cursor: pointer; padding: 0 4px; }
+  .remove-btn:hover { color: #e24b4a; }
+  .add-nurse-btn { width: 100%; padding: 10px; border: 1px dashed #1D9E75; border-radius: 10px; background: none; color: #1D9E75; font-size: 14px; font-family: inherit; cursor: pointer; margin-top: 6px; transition: background 0.15s; }
+  .add-nurse-btn:hover { background: rgba(29,158,117,0.06); }
+  .copy-btn { font-size: 12px; background: none; border: 1px solid #ddd; border-radius: 6px; padding: 4px 10px; cursor: pointer; color: #666; font-family: inherit; transition: border-color 0.15s, color 0.15s; }
+  .copy-btn:hover { border-color: #1D9E75; color: #1D9E75; }
+  .submit-row { display: flex; align-items: center; justify-content: space-between; margin-top: 1.5rem; }
+  .submit-btn { background: #1D9E75; color: white; border: none; border-radius: 8px; padding: 11px 32px; font-size: 15px; font-family: inherit; font-weight: 600; cursor: pointer; min-width: 180px; transition: background 0.15s; }
+  .submit-btn:hover { background: #0F6E56; }
+  .submit-btn:disabled { background: #9FE1CB; cursor: not-allowed; }
+  .clear-btn { background: none; border: 1px solid #ddd; border-radius: 8px; padding: 11px 22px; font-size: 14px; font-family: inherit; color: #666; cursor: pointer; }
+  .clear-btn:hover { border-color: #aaa; }
+  .badge { font-size: 11px; padding: 3px 9px; border-radius: 6px; font-weight: 600; display: inline-block; }
+  .badge-mod { background: #E1F5EE; color: #0F6E56; }
+  .badge-high { background: #FAECE7; color: #993C1D; }
+  .badge-crit { background: #FCEBEB; color: #A32D2D; }
+  .badge-low { background: #F1EFE8; color: #5F5E5A; }
+  .summary-bar { background: #f5f5f3; border-radius: 8px; padding: 10px 14px; margin-top: 12px; display: flex; gap: 24px; flex-wrap: wrap; }
+  .summary-item { font-size: 12px; color: #666; }
+  .summary-item span { font-weight: 600; color: #1a1a1a; }
+  .success-msg { display: none; background: #E1F5EE; border: 1px solid #5DCAA5; border-radius: 10px; padding: 14px 18px; margin-top: 1rem; color: #0F6E56; font-size: 14px; line-height: 1.6; }
+  .error-msg { display: none; background: #FCEBEB; border: 1px solid #F09595; border-radius: 10px; padding: 14px 18px; margin-top: 1rem; color: #A32D2D; font-size: 14px; }
+  .days-grid { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .day-toggle { display: none; }
+  .day-label { font-size: 12px; padding: 5px 10px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; color: #555; background: white; user-select: none; transition: all 0.15s; }
+  .day-toggle:checked + .day-label { background: #1D9E75; color: white; border-color: #1D9E75; }
+  .shift-divider { border: none; border-top: 1px solid #ebebeb; margin: 12px 0; }
+  .sub-label { font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .dur-btns-wrap { display: flex; gap: 8px; margin-bottom: 12px; }
+  .dur-btn { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f7; color: #666; font-size: 13px; font-family: inherit; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .dur-btn:hover { border-color: #1D9E75; color: #1D9E75; }
+  .dur-btn.active { border-color: #1D9E75; background: rgba(29,158,117,0.08); color: #0F6E56; font-weight: 600; }
+  .days-row { display: none; margin-bottom: 10px; }
+  .days-row.visible { display: block; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 600px) {
+    .field-grid { grid-template-columns: 1fr; }
+    .field-grid.three { grid-template-columns: 1fr; }
+    .dur-btns-wrap { flex-direction: column; }
+    .submit-row { flex-direction: column-reverse; gap: 10px; }
+    .submit-btn, .clear-btn { width: 100%; text-align: center; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="header">
+    <div class="logo">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8 2 4 5 4 9c0 5 8 13 8 13s8-8 8-13c0-4-4-7-8-7zm0 9a2 2 0 110-4 2 2 0 010 4z"/></svg>
+    </div>
+    <div class="header-text">
+      <h1>Heron Recruitment — Shift Booking</h1>
+      <p>Submit nurse staffing requests for your facility</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Facility details</div>
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="facilitySearch" placeholder="Search facility name..." oninput="filterFacilities()" autocomplete="off" />
+    </div>
+    <div class="field" style="margin-bottom:14px;">
+      <label>Select facility</label>
+      <select id="facilitySelect" onchange="prefill()"></select>
+    </div>
+    <div class="field-grid">
+      <div class="field">
+        <label>Contact name</label>
+        <input type="text" id="contactName" placeholder="e.g. Mary O'Brien" />
+      </div>
+      <div class="field">
+        <label>Contact role</label>
+        <input type="text" id="contactRole" placeholder="e.g. DON / ADON" />
+      </div>
+      <div class="field">
+        <label>Contact phone</label>
+        <input type="tel" id="contactPhone" placeholder="+353 1 ..." />
+      </div>
+      <div class="field">
+        <label>Contact email</label>
+        <input type="email" id="contactEmail" placeholder="name@facility.ie" />
+      </div>
+    </div>
+    <div id="facilityMeta" style="display:none;">
+      <div class="summary-bar">
+        <div class="summary-item">Weekly RN demand <span id="metaShifts">—</span></div>
+        <div class="summary-item">Priority <span id="metaPriority">—</span></div>
+        <div class="summary-item">Status <span id="metaStatus">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+      <div class="section-label" style="margin-bottom:0;">Nurse requests</div>
+      <button class="copy-btn" onclick="copyFirstToAll()">Copy shift 1 to all</button>
+    </div>
+    <div id="nurseList"></div>
+    <button class="add-nurse-btn" onclick="addNurse()">+ Add another nurse</button>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Additional notes</div>
+    <div class="field">
+      <label>Special requirements or notes</label>
+      <textarea id="notes" rows="3" placeholder="e.g. dementia care experience preferred, specific ward requirements..."></textarea>
+    </div>
+  </div>
+
+  <div class="submit-row">
+    <button class="clear-btn" onclick="clearForm()">Clear form</button>
+    <button class="submit-btn" id="submitBtn" onclick="submitForm()">Submit booking request</button>
+  </div>
+  <div class="success-msg" id="successMsg"></div>
+  <div class="error-msg" id="errorMsg"></div>
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxPVxEpqZgOVmPy8Q6sGxTlGGxGkSGRMy_ZaBLdTmYjyxyrAgJXrr9C3iSK7kdYhsH5/exec';
+
+const allFacilities = [
+  { name: 'Anam Cara Housing with Care', shifts: null, urgency: null, status: null },
+  { name: 'Beechfield Manor Nursing Home', shifts: 7, urgency: 'High', status: 'High' },
+  { name: 'Beneavin House Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Beneavin Lodge Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Beneavin Manor Nursing Home', shifts: 4, urgency: 'Medium', status: 'Moderate' },
+  { name: 'Blanchardstown Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Cabra Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Cara Care Centre Santry', shifts: 3, urgency: 'Medium', status: 'Moderate' },
+  { name: 'Care Choice Finglas', shifts: 2, urgency: 'Medium', status: 'Low' },
+  { name: 'Castleknock Lodge Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Castleknock Nursing Home', shifts: 1, urgency: 'Low', status: 'Low' },
+  { name: 'Cherry Orchard Hospital Residential Unit', shifts: 2, urgency: 'Medium', status: 'Low' },
+  { name: 'Church View Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Clarehaven Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Clareville Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Clearbrook Nursing Home', shifts: 2, urgency: 'High', status: 'Low' },
+  { name: 'Clondalkin Lodge Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Clonee Vale Care Home', shifts: null, urgency: null, status: null },
+  { name: 'Connolly Hospital Transitional Care Unit', shifts: 3, urgency: 'Medium', status: 'Moderate' },
+  { name: 'Coolmine Woods Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Corduff Care Centre', shifts: null, urgency: null, status: null },
+  { name: 'Cuan Ros Residential Unit', shifts: null, urgency: null, status: null },
+  { name: 'Cúram Care Homes – Navan Road', shifts: 2, urgency: 'Medium', status: 'Low' },
+  { name: 'Elm Green Nursing Home', shifts: 1, urgency: 'Low', status: 'Low' },
+  { name: 'Esker Rí Nursing Home', shifts: 1, urgency: 'High', status: 'Low' },
+  { name: 'Farmleigh Woods Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Glenaulin Nursing Home', shifts: 1, urgency: 'High', status: 'Low' },
+  { name: 'Griffeen Valley Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Hampstead Private Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Hansfield Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Hartstown Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Harvey Healthcare Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Herons Wood Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Highfield Healthcare (Older Persons Unit – catchment)', shifts: 1, urgency: 'Medium', status: 'Low' },
+  { name: 'Kiltipper Woods Care Centre', shifts: 3, urgency: 'Critical', status: 'Moderate' },
+  { name: 'Lexington House Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Lisheen Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Lucan Lodge Nursing Home', shifts: 2, urgency: 'High', status: 'Low' },
+  { name: 'Marymount Care Centre Lucan', shifts: 3, urgency: 'Critical', status: 'Moderate' },
+  { name: 'Maryfield Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Millbrook Manor Nursing Home', shifts: 4, urgency: 'Critical', status: 'Moderate' },
+  { name: 'Mount Hybla Private Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Mount Sackville Nursing Unit', shifts: null, urgency: null, status: null },
+  { name: 'Mountview Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Nephin Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Newpark Care Centre', shifts: null, urgency: null, status: null },
+  { name: 'Oakfield Nursing Home Clondalkin', shifts: null, urgency: null, status: null },
+  { name: "Our Lady's Manor Nursing Home", shifts: null, urgency: null, status: null },
+  { name: 'Peamount Healthcare Newcastle', shifts: null, urgency: null, status: null },
+  { name: 'Phoenix Park Community Nursing Units', shifts: null, urgency: null, status: null },
+  { name: 'Rathborne Care Centre', shifts: null, urgency: null, status: null },
+  { name: 'Rathcoole Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Rosemount Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Sally Park Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'Santa Sabina House', shifts: null, urgency: null, status: null },
+  { name: 'Silver Stream Healthcare (West Dublin cluster homes)', shifts: null, urgency: null, status: null },
+  { name: "St Brigid's Nursing Home Blanchardstown", shifts: null, urgency: null, status: null },
+  { name: "St Joseph's Centre Clondalkin", shifts: null, urgency: null, status: null },
+  { name: "St Mary's Hospital Phoenix Park", shifts: null, urgency: null, status: null },
+  { name: "St Vincent's Centre (Dublin 7)", shifts: null, urgency: null, status: null },
+  { name: 'Talbot Lodge Nursing Home', shifts: null, urgency: null, status: null },
+  { name: 'The Residence Nursing Home (Blanchardstown catchment)', shifts: null, urgency: null, status: null },
+  { name: 'Tymon North Community Nursing Unit', shifts: null, urgency: null, status: null },
+  { name: 'Virtue Integrated Care (West Dublin homes cluster)', shifts: null, urgency: null, status: null },
+  { name: 'Westmanstown Care Centre', shifts: null, urgency: null, status: null },
+].sort((a, b) => a.name.localeCompare(b.name));
+
+let nurseCount = 0;
+const today = new Date().toISOString().split('T')[0];
+const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+function buildOptions(list) {
+  const sel = document.getElementById('facilitySelect');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— choose a facility —</option>';
+  list.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f.name;
+    opt.textContent = f.name;
+    if (f.name === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function filterFacilities() {
+  const q = document.getElementById('facilitySearch').value.toLowerCase();
+  buildOptions(q ? allFacilities.filter(f => f.name.toLowerCase().includes(q)) : allFacilities);
+}
+
+function statusBadge(s) {
+  if (!s) return '<span class="badge badge-low">—</span>';
+  const map = { High: 'badge-high', Moderate: 'badge-mod', Low: 'badge-low', Critical: 'badge-crit', Medium: 'badge-mod' };
+  return `<span class="badge ${map[s]||'badge-low'}">${s}</span>`;
+}
+
+function prefill() {
+  const name = document.getElementById('facilitySelect').value;
+  const meta = document.getElementById('facilityMeta');
+  if (!name) { meta.style.display = 'none'; return; }
+  const f = allFacilities.find(x => x.name === name);
+  if (!f) return;
+  document.getElementById('metaShifts').textContent = f.shifts ? f.shifts + ' RN shifts/week' : '—';
+  document.getElementById('metaPriority').innerHTML = statusBadge(f.urgency);
+  document.getElementById('metaStatus').innerHTML = statusBadge(f.status);
+  meta.style.display = 'block';
+  if (document.getElementById('nurseList').children.length === 0) {
+    for (let i = 0; i < (f.shifts ? Math.min(f.shifts, 3) : 1); i++) addNurse();
+  }
+}
+
+function setDuration(btn, n) {
+  btn.closest('.dur-btns-wrap').querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (parseInt(btn.dataset.hours) > 0) calcEnd(n);
+}
+
+function calcEnd(n) {
+  const start = document.getElementById('start-' + n).value;
+  if (!start) return;
+  const active = document.querySelector('#nurse-' + n + ' .dur-btn.active');
+  if (!active || parseInt(active.dataset.hours) === 0) return;
+  const [h, m] = start.split(':').map(Number);
+  const total = h * 60 + m + parseInt(active.dataset.hours) * 60;
+  document.getElementById('end-' + n).value = String(Math.floor(total/60)%24).padStart(2,'0') + ':' + String(total%60).padStart(2,'0');
+}
+
+function toggleDays(select, rowId) {
+  document.getElementById(rowId).classList.toggle('visible', select.value === 'Specific days...');
+}
+
+function addNurse() {
+  nurseCount++;
+  const n = nurseCount;
+  const div = document.createElement('div');
+  div.className = 'nurse-row';
+  div.id = 'nurse-' + n;
+  const dayBoxes = days.map(d => `<input type="checkbox" class="day-toggle" id="day-${n}-${d}"><label class="day-label" for="day-${n}-${d}">${d}</label>`).join('');
+  div.innerHTML = `
+    <div class="nurse-row-header">
+      <span class="nurse-num">Nurse ${n}</span>
+      ${n > 1 ? `<button class="remove-btn" onclick="removeNurse(${n})">×</button>` : ''}
+    </div>
+    <div class="field-grid three" style="margin-bottom:12px;">
+      <div class="field">
+        <label>Shift type</label>
+        <select id="shifttype-${n}">
+          <option value="">— select —</option>
+          <option>Day</option><option>Night</option><option>Early</option>
+          <option>Late</option><option>Long day</option><option>Sleepover</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Grade required</label>
+        <select id="grade-${n}">
+          <option>RGN</option><option>RPN</option><option>RMHN</option><option>Any RN</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Ward / unit</label>
+        <input type="text" id="ward-${n}" placeholder="e.g. Dementia, Rehab" />
+      </div>
+    </div>
+    <hr class="shift-divider">
+    <div class="sub-label" style="margin-top:10px;">Shift duration & times</div>
+    <div class="dur-btns-wrap">
+      <button class="dur-btn" data-hours="8" onclick="setDuration(this,${n})">8 hr shift</button>
+      <button class="dur-btn" data-hours="12" onclick="setDuration(this,${n})">12 hr shift</button>
+      <button class="dur-btn" data-hours="0" onclick="setDuration(this,${n})">Custom</button>
+    </div>
+    <div class="field-grid" style="margin-bottom:12px;">
+      <div class="field">
+        <label>Start time</label>
+        <input type="time" id="start-${n}" oninput="calcEnd(${n})" />
+      </div>
+      <div class="field">
+        <label>End time</label>
+        <input type="time" id="end-${n}" />
+      </div>
+    </div>
+    <hr class="shift-divider">
+    <div class="sub-label" style="margin-top:10px;">Date & recurrence</div>
+    <div class="field-grid" style="margin-bottom:12px;">
+      <div class="field">
+        <label>Start date</label>
+        <input type="date" id="date-${n}" min="${today}" />
+      </div>
+      <div class="field">
+        <label>Recurrence</label>
+        <select id="recurrence-${n}" onchange="toggleDays(this,'days-row-${n}')">
+          <option>Once off</option><option>Daily (Mon–Fri)</option>
+          <option>Daily (Mon–Sun)</option><option>Weekly</option><option>Specific days...</option>
+        </select>
+      </div>
+    </div>
+    <div class="days-row" id="days-row-${n}">
+      <label style="margin-bottom:6px;display:block;">Select days</label>
+      <div class="days-grid">${dayBoxes}</div>
+    </div>
+    <hr class="shift-divider">
+    <div class="field" style="margin-top:10px;">
+      <label>Preferred nurse (optional)</label>
+      <input type="text" id="preferred-${n}" placeholder="Name if known" />
+    </div>
+  `;
+  document.getElementById('nurseList').appendChild(div);
+  updateNurseNumbers();
+}
+
+function removeNurse(n) {
+  const el = document.getElementById('nurse-' + n);
+  if (el) el.remove();
+  updateNurseNumbers();
+}
+
+function updateNurseNumbers() {
+  document.querySelectorAll('.nurse-row').forEach((r, i) => {
+    const label = r.querySelector('.nurse-num');
+    if (label) label.textContent = 'Nurse ' + (i + 1);
+  });
+}
+
+function copyFirstToAll() {
+  const rows = document.querySelectorAll('.nurse-row');
+  if (rows.length < 2) return;
+  const firstId = rows[0].id.replace('nurse-', '');
+  const shiftVal = document.getElementById('shifttype-' + firstId).value;
+  const gradeVal = document.getElementById('grade-' + firstId).value;
+  const startVal = document.getElementById('start-' + firstId).value;
+  const dateVal = document.getElementById('date-' + firstId).value;
+  const recVal = document.getElementById('recurrence-' + firstId).value;
+  const activeBtn = rows[0].querySelector('.dur-btn.active');
+  rows.forEach((row, i) => {
+    if (i === 0) return;
+    const id = row.id.replace('nurse-', '');
+    document.getElementById('shifttype-' + id).value = shiftVal;
+    document.getElementById('grade-' + id).value = gradeVal;
+    document.getElementById('start-' + id).value = startVal;
+    document.getElementById('date-' + id).value = dateVal;
+    document.getElementById('recurrence-' + id).value = recVal;
+    toggleDays(document.getElementById('recurrence-' + id), 'days-row-' + id);
+    if (activeBtn) {
+      row.querySelectorAll('.dur-btn').forEach(b => {
+        b.classList.remove('active');
+        if (b.dataset.hours === activeBtn.dataset.hours) { b.classList.add('active'); calcEnd(id); }
+      });
+    }
+  });
+}
+
+function collectData() {
+  const nurses = [];
+  document.querySelectorAll('.nurse-row').forEach(row => {
+    const id = row.id.replace('nurse-', '');
+    const activeBtn = row.querySelector('.dur-btn.active');
+    const specificDays = days.filter(d => {
+      const cb = document.getElementById('day-' + id + '-' + d);
+      return cb && cb.checked;
+    }).join(', ');
+    nurses.push({
+      shiftType: document.getElementById('shifttype-' + id).value,
+      grade: document.getElementById('grade-' + id).value,
+      ward: document.getElementById('ward-' + id).value,
+      duration: activeBtn ? activeBtn.textContent.trim() : '',
+      startTime: document.getElementById('start-' + id).value,
+      endTime: document.getElementById('end-' + id).value,
+      startDate: document.getElementById('date-' + id).value,
+      recurrence: document.getElementById('recurrence-' + id).value,
+      specificDays,
+      preferredNurse: document.getElementById('preferred-' + id).value,
+    });
+  });
+  return {
+    facility: document.getElementById('facilitySelect').value,
+    contactName: document.getElementById('contactName').value,
+    contactRole: document.getElementById('contactRole').value,
+    contactPhone: document.getElementById('contactPhone').value,
+    contactEmail: document.getElementById('contactEmail').value,
+    notes: document.getElementById('notes').value,
+    nurses,
+  };
+}
+
+async function submitForm() {
+  const data = collectData();
+  if (!data.facility) { alert('Please select a facility.'); return; }
+  if (!data.contactName) { alert('Please enter a contact name.'); return; }
+  if (data.nurses.length === 0) { alert('Please add at least one nurse request.'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Submitting...';
+  document.getElementById('successMsg').style.display = 'none';
+  document.getElementById('errorMsg').style.display = 'none';
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    document.getElementById('successMsg').style.display = 'block';
+    document.getElementById('successMsg').innerHTML = `
+      Booking request submitted for <strong>${data.facility}</strong> — ${data.nurses.length} nurse(s) requested.<br>
+      <span style="font-size:13px;opacity:0.85;">Heron will be in touch within 2 hours to confirm nurse allocation.</span>
+    `;
+    document.getElementById('successMsg').scrollIntoView({ behavior: 'smooth' });
+    btn.innerHTML = 'Submit booking request';
+    btn.disabled = false;
+  } catch (err) {
+    document.getElementById('errorMsg').style.display = 'block';
+    document.getElementById('errorMsg').textContent = 'Submission failed. Please try again or contact Heron directly.';
+    btn.innerHTML = 'Submit booking request';
+    btn.disabled = false;
+  }
+}
+
+function clearForm() {
+  document.getElementById('facilitySelect').value = '';
+  document.getElementById('facilitySearch').value = '';
+  buildOptions(allFacilities);
+  ['contactName','contactRole','contactPhone','contactEmail','notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('facilityMeta').style.display = 'none';
+  document.getElementById('nurseList').innerHTML = '';
+  document.getElementById('successMsg').style.display = 'none';
+  document.getElementById('errorMsg').style.display = 'none';
+  nurseCount = 0;
+}
+
+buildOptions(allFacilities);
+addNurse();
+</script>
+</body>
+</html>
